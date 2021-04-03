@@ -9,17 +9,15 @@ from scipy.interpolate import interp1d
 from pandas.plotting import table
 import statsmodels.api as sm
 
-sns.set(rc={'figure.figsize':(set_size(420))})
-sns.set_theme(style="whitegrid")
 
-df_knolls_grund = pd.read_csv("data\knolls_grund.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)", usecols = ['Datum Tid (UTC)','Havstemperatur'])
+df_knolls_grund = pd.read_csv("data-set\knolls_grund.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)", usecols = ['Datum Tid (UTC)','Havstemperatur'])
 
-df_huvudskar = pd.read_csv("data\huvudskar.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)")
+df_huvudskar = pd.read_csv("data-set\huvudskar.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)")
 
 df_huvudskar = df_huvudskar.loc[df_huvudskar["Matdjup"]==1]
 df_huvudskar = df_huvudskar.drop(columns=["Kvalitet", "Matdjup"])
 
-df_finngrundet = pd.read_csv("data/finngrundet.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)", usecols = ['Datum Tid (UTC)','Havstemperatur'])
+df_finngrundet = pd.read_csv("data-set/finngrundet.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)", usecols = ['Datum Tid (UTC)','Havstemperatur'])
 
 start, end = '2020-09-28', '2020-11-29'
 df_finngrundet = df_finngrundet.loc[start:end]
@@ -29,7 +27,7 @@ df_knolls_grund = df_knolls_grund.loc[start:end]
 smhi_mean = pd.concat([df_knolls_grund, df_huvudskar, df_finngrundet]).groupby(level=0).mean()
 smhi_mean = smhi_mean["Havstemperatur"].rolling(3, center=True).mean()
 
-df1 = pd.read_csv("data/sst.csv", sep=";", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)")
+df1 = pd.read_csv("data-set/sst.csv", sep=",", parse_dates=["Datum Tid (UTC)"], index_col="Datum Tid (UTC)")
 df1.sort_values(by=['Datum Tid (UTC)'], inplace=True)
 df1 = df1.loc[start:end]
 df1['month'] = [d.strftime('%b') for d in df1.index]
@@ -70,11 +68,13 @@ def smhi():
     ax.plot(df_finngrundet["Datum Tid (UTC)"], df_finngrundet["Havstemperatur"],linestyle='--', label='Finngrundet')
     ax.plot(df_huvudskar["Datum Tid (UTC)"], df_huvudskar["Havstemperatur"],linestyle='--', label='Huvudskär')
     ax.plot(df_knolls_grund["Datum Tid (UTC)"], df_knolls_grund["Havstemperatur"],linestyle='--', label='Knolls grund')
-    ax.plot(smhi_mean.loc[start:end],  label='Referensdata (Medelvärde)')
+    ax.plot(smhi_mean.loc[start:end],  label='Medelvärde (Referensdata)')
     
     ax.legend()
-    ax.set_ylabel('Temperatur [°C]')
-    ax.set_xlabel("Vecka")
+    ax.set_ylabel('Temperatur [°C]', fontweight='demi')
+    ax.yaxis.set_label_position("right")
+    ax.set_xlabel("Vecka", fontweight='demi')
+    ax.set_title("Temperaturutveckling på 0,5 m - SMHIs bojar", fontweight='demi')
 
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=0))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%U'))
@@ -109,21 +109,22 @@ def average(df):
     
     # Plot daily and weekly resampled time series together
     fig, ax = plt.subplots()
-    ax.plot(df.loc[start:end, 'Havstemperatur'], marker='.', linestyle='None', alpha=0.5, label='Observation')
+    ax.plot(df.loc[start:end, 'Havstemperatur'], marker='.', linestyle='None', alpha=0.5, label='Observation: $SST_{skin}$')
     ax.plot(df_5d.loc[start:end], marker='.', linestyle='-', label='5-d rullande medelvärde')
     #ax.plot(intdf.loc[start:end], marker='.', linestyle='-', label='Dagligt medelvärde')
     ax.plot(df_weekly_mean.loc[start:end], marker='D', linestyle='--', markersize=7, label='Veckovis medelvärde')
 
-    ax.plot(smhi_mean.loc[start:end], label="Referensdata SMHI")
+    ax.plot(smhi_mean.loc[start:end], label="Referensdata: 0,5 m (SMHI)")
     #ax.fill_between(df_std.index, df_7d - 2 * df_std, df_7d + 2 * df_std, color='b', alpha=0.2)
     
-    ax.set_ylabel('Temperatur [°C]')
-    ax.set_xlabel("Vecka")
+    ax.set_ylabel('Temperatur [°C]', fontweight='demi')
+    ax.yaxis.set_label_position("right")
+    ax.set_xlabel("Vecka", fontweight='demi')
 
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=0))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%U'))
 
-    #ax.set_title('Temperaturbias på +3,35 °C')
+    ax.set_title('Havstemperaturutveckling i Östersjöområdet', fontweight='demi')
     ax.set_ylim(ymin=4)
     ax.legend()
     
@@ -183,8 +184,10 @@ def dist(df):
 
 tex_fonts = {
     # Use LaTeX to write all text
-    "text.usetex": False,
-    "font.family": "serif",
+    #"text.usetex": False,
+    "font.family": "sans-serif",
+    "font.sans-serif": "Avenir Next LT Pro",
+    "font.weight": "demi",
     # Use 10pt font in plots, to match 10pt font in document
     "axes.labelsize": 12,
     "font.size": 12,
@@ -193,7 +196,12 @@ tex_fonts = {
     "xtick.labelsize": 10,
     "ytick.labelsize": 10
 }
-plt.rcParams.update(tex_fonts)
+sns.set(rc={'figure.figsize':(set_size(600))})
+sns.set_theme(style="whitegrid")
+#plt.rcParams.update(tex_fonts)
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = 'Avenir Next LT Pro'
+#plt.rcParams['font.weight'] = 'demi'
 #plt.rcParams["figure.figsize"] = set_size(390)
 
 #seasonality(df1)
@@ -209,5 +217,8 @@ average(df1)
 #bias(df1)
 #data_comp(df1)
 
-plt.tight_layout(pad=0.0,h_pad=0.0,w_pad=0.0)
-plt.show()
+#plt.tight_layout(pad=0.0,h_pad=0.0,w_pad=0.0)
+plt.tight_layout()
+#plt.show()
+#plt.savefig("exported/bias.svg", format="svg")
+plt.savefig("exported/6.png", dpi=300)
